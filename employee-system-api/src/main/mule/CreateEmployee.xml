@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	
+	<flow name="post:\employee:application\json:identificationsystemapi-config">
+        <set-variable value="#[output application/java --- payload]" doc:name="requestBody" doc:id="1ea6e3e3-a5db-4de2-94eb-06af33c6b0be" variableName="requestBody"/>
+		<flow-ref doc:name="createEmployeeDatabase" doc:id="99d6c8b4-65a0-40f8-9ab6-d0cffcdac158" name="createEmployeeDatabase" />
+		<flow-ref doc:name="InsertRecords" doc:id="d3ad7ea5-505a-4ce6-8196-fcd2c4c7c8b3" name="InsertRecords"/>
+		<ee:transform doc:name="Add created status to response" doc:id="06c87245-4daa-43db-8e57-0375059c7951">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.requestBody ++ {
+	status: "created"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:execute-script doc:name="Delete database tables to refresh them" doc:id="0acdcb84-78d9-4314-b365-e2aed832412d" config-ref="derbyIdentificationConfig" target="tablesDropped">
+			<db:sql>DROP TABLE ADDRESS;
+DROP TABLE COMMUNICATION;
+DROP TABLE IDENTIFICATION
+</db:sql>
+		</db:execute-script>
+    </flow>
+	<sub-flow name="InsertRecords" doc:id="12f9e75f-41b9-4ae4-959d-293d815a30be" >
+		<db:insert doc:name="Insert Identification information" doc:id="4a492543-df23-43c0-b68d-690eafe9c3d0" config-ref="derbyIdentificationConfig">
+			<db:sql>INSERT INTO IDENTIFICATION(
+	FIRST_NAME,
+	LAST_NAME,
+	BIRTHDATE,
+	GENDER,
+	TITLE
+)
+VALUES(
+	:FirstName,
+	:LastName,
+	:DOB,
+	:Gender,
+	:Title
+)</db:sql>
+			<db:input-parameters><![CDATA[#[vars.requestBody.Identification]]]></db:input-parameters>
+		</db:insert>
+		<db:select doc:name="Select the ID of the inserted Identification record" doc:id="026cea10-e2a8-4c46-b41c-656dc8f5b385" config-ref="derbyIdentificationConfig" target="createdId" targetValue="#[payload.ID[0]]">
+			<db:sql>SELECT
+MAX(ID) ID
+FROM
+IDENTIFICATION
+</db:sql>
+		</db:select>
+		<db:bulk-insert doc:name="Insert Address Records" doc:id="b2ce552f-7d85-421c-a74c-47af65ba04bf" config-ref="derbyIdentificationConfig">
+			<db:bulk-input-parameters><![CDATA[#[vars.requestBody.Address map ((address) -> address ++ {AD_IDENTIFICATION_ID: vars.createdId} )]]]></db:bulk-input-parameters>
+			<db:sql>INSERT INTO ADDRESS (
+	TYPE,
+	ADDRESS_NUMBER,
+	STREET,
+	UNIT,
+	CITY,
+	STATE,
+	ZIPCODE,
+	AD_IDENTIFICATION_ID
+)
+VALUES (
+	:type,
+	:number,
+	:street,
+	:Unit,
+	:City,
+	:State,
+	:zipcode,
+	:AD_IDENTIFICATION_ID
+)</db:sql>
+		</db:bulk-insert>
+		<db:bulk-insert doc:name="Insert Communication Records" doc:id="b8834988-12b0-4915-86dc-267d77347d71" config-ref="derbyIdentificationConfig">
+			<db:bulk-input-parameters><![CDATA[#[vars.requestBody.Communication map ((Communication) -> Communication ++ {preferred: Communication.preferred default null, COMM_IDENTIFICATION_ID: vars.createdId} )]]]></db:bulk-input-parameters>
+			<db:sql>INSERT INTO COMMUNICATION (
+	TYPE,
+	VALUE,
+	PREFERRED,
+	COMM_IDENTIFICATION_ID
+)
+VALUES(
+	:type,
+	:value,
+	:preferred,
+	:COMM_IDENTIFICATION_ID
+)</db:sql>
+		</db:bulk-insert>
+	</sub-flow>
+	
+</mule>

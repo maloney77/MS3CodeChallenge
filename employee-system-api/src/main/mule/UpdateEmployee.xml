@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="patch:\employee:application\json:identificationsystemapi-config">
+        <ee:transform doc:name="Transform Message" doc:id="cc9dcb66-892e-4324-a85d-ef80e0ad6d6d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="3d3e7b71-d204-4b06-882a-d808344bf556" name="createEmployeeDatabase" />
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  Identification: {
+    Title: "Manager",
+    Gender: "M",
+    FirstName: "Bob",
+    DOB: "06/21/1980",
+    LastName: "Frederick"
+  },
+  Address: [
+    {
+      "type ": "home",
+      number: 1234,
+      Unit: "1 a",
+      State: "WV",
+      City: "New York",
+      zipcode: "12345",
+      street: "123 street"
+    }
+  ],
+  Communication: [
+    {
+      "type": "email",
+      value: "bfe@sample.com",
+      preferred: "true"
+    }, 
+    {
+      "type": "cell",
+      value: "304-555-8282"
+    }
+  ],
+  updates: {
+    address: "123 street",
+    city: "New York"
+  }
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+		<db:execute-script doc:name="Delete database tables to refresh them" doc:id="5c63c33d-c310-4c5d-b587-fdd319fc5c38" config-ref="derbyIdentificationConfig" target="tablesDropped">
+			<db:sql>DROP TABLE ADDRESS;
+DROP TABLE COMMUNICATION;
+DROP TABLE IDENTIFICATION
+</db:sql>
+		</db:execute-script>
+    </flow>
+	
+	
+	</mule>

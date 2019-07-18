@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="89eadf56-77d6-42b0-a6c3-5f9c55ae0b24" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<apikit:config name="employeesystemapi-config" raml="identificationsystemapi.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" >
+		<apikit:flow-mappings >
+			<apikit:flow-mapping resource="/employee" action="get" flow-ref="get:\employee:identificationsystemapi-config" />
+			<apikit:flow-mapping resource="/employee" action="post" content-type="application/json" flow-ref="post:\employee:application\json:identificationsystemapi-config" />
+			<apikit:flow-mapping resource="/employee" action="patch" content-type="application/json" flow-ref="patch:\employee:application\json:identificationsystemapi-config" />
+			<apikit:flow-mapping resource="/employee" action="delete" flow-ref="delete:\employee:identificationsystemapi-config" />
+		</apikit:flow-mappings>
+	</apikit:config>
+	<db:config name="createDbConfig" doc:name="Database Config" doc:id="1357b2ca-daab-4911-ba2c-773fa1d6c4c6" >
+		<db:derby-connection database="companyDb" subsubProtocol="memory" create="true" />
+	</db:config>
+	<db:config name="derbyIdentificationConfig" doc:name="Database Config" doc:id="9a3440f4-678e-43a9-a46c-35792ef5ac87" >
+		<db:derby-connection database="companyDb" subsubProtocol="memory" />
+	</db:config>
+	<http:listener-config name="HTTP_Console_config" doc:name="HTTP Listener config" doc:id="349d606d-9630-45c2-a5fb-bf01c7822a8c" >
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	
+
+</mule>

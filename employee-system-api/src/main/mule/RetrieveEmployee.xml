@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	 <flow name="get:\employee:identificationsystemapi-config">
+		<set-variable value='#[""]' doc:name="queryWhereClauseName" doc:id="165d33c1-efac-43e1-ad16-e57964fdd3e8" variableName="queryWhereClauseName"/>
+		<set-variable value='#[""]' doc:name="queryWhereClauseAddress" doc:id="0f2d8740-0ae1-48cf-abcd-ee3a69438888" variableName="queryWhereClauseAddress"/>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="1a10a2b8-7f5c-4cb5-b8b5-267d8515f3be" doc:name="add last name query param to database query">
+            <ee:message>
+            </ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="queryWhereClause" ><![CDATA[%dw 2.0
+output application/java
+---
+if (attributes.queryParams.lastName != null)
+	"Where " ++ "LAST_NAME = " ++ "'" ++ attributes.queryParams.lastName ++ "' "
+else
+	vars.queryWhereClauseName
+	
+]]></ee:set-variable>
+			</ee:variables>
+        
+</ee:transform>
+		<ee:transform doc:name="add first name query param to database query" doc:id="ec92b555-b6df-4887-aabd-8a7d54fcae05" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="queryWhereClause" ><![CDATA[%dw 2.0
+output application/java
+---
+if (attributes.queryParams.firstName == null)
+	vars.queryWhereClauseName
+else if (attributes.queryParams.firstName != null and (vars.queryWhereClauseName contains("Where")))
+	(vars.queryWhereClauseName default "") ++ " AND "  ++ "FIRST_NAME = " ++ "'" ++ (attributes.queryParams.firstName default "") ++ "' "
+else
+	"Where " ++ "FIRST_NAME = " ++ "'" ++ (attributes.queryParams.firstName default "") ++ "' "
+	]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="add state query param to database query" doc:id="9a013497-c1a4-4d0b-85ed-c97cf4975bf0" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="queryWhereClause" ><![CDATA[%dw 2.0
+output application/java
+---
+if (attributes.queryParams.state == null)
+	vars.queryWhereClause
+else if (attributes.queryParams.state != null and (vars.queryWhereClause contains("Where")))
+	(vars.queryWhereClause default "") ++ " AND "  ++ "STATE = " ++ "'" ++ (attributes.queryParams.state default "") ++ "' "
+else
+	"Where " ++ "STATE = " ++ "'" ++ (attributes.queryParams.state default "") ++ "' "]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="add city query param to database query" doc:id="4fd46f7e-1e3d-4d36-92c9-f6301986e147" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="queryWhereClauseAddress" ><![CDATA[%dw 2.0
+output application/java
+---
+if (attributes.queryParams.city == null)
+	vars.queryWhereClauseAddress
+else if (attributes.queryParams.city != null and (vars.queryWhereClauseAddress contains("Where")))
+	(vars.queryWhereClauseAddress default "") ++ " AND "  ++ "CITY = " ++ "'" ++ (attributes.queryParams.city default "") ++ "' "
+else
+	"Where " ++ "CITY = " ++ "'" ++ (attributes.queryParams.city default "") ++ "' "]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="aadfbba2-a388-464f-a656-b46b44cf5f64" name="createEmployeeDatabase" />
+		<db:select doc:name="Select Identification" doc:id="ed7ea313-5c3e-4013-90b2-c997f1905041" config-ref="derbyIdentificationConfig" target="identificationResult">
+			<db:sql >#['SELECT 
+ID,
+FIRST_NAME,
+LAST_NAME,
+BIRTHDATE,
+GENDER,
+TITLE
+FROM IDENTIFICATION
+$(vars.queryWhereClauseName)']</db:sql>
+		</db:select>
+		<db:select doc:name="Select address" doc:id="42d63da5-4bc1-4436-a085-b6df74c7be07" target="addressResult" config-ref="derbyIdentificationConfig">
+			<db:sql >#['SELECT
+TYPE,
+ZIPCODE,
+ADDRESS_NUMBER,
+STATE,
+CITY,
+UNIT,
+STREET,
+AD_IDENTIFICATION_ID
+FROM
+ADDRESS
+$(vars.queryWhereClauseAddress)']</db:sql>
+		</db:select>
+		<db:select doc:name="Select communication" doc:id="f86fea57-36f1-4f3d-8ad4-92e3e505ef2c" config-ref="derbyIdentificationConfig" target="communicationResult">
+			<db:sql >SELECT
+TYPE,
+VALUE,
+PREFERRED,
+COMM_IDENTIFICATION_ID
+FROM
+COMMUNICATION</db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="85c1bf48-8bc4-4cff-b221-60279b13f40a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.identificationResult map (iden, i) -> {
+	"Identification": {
+		"FirstName": iden.FIRST_NAME,
+		"LastName": iden.LAST_NAME,
+		"DOB": iden.BIRTHDATE,
+		"Gender": iden.GENDER,
+		"Title": iden.TITLE
+	},
+	"Address": (vars.addressResult filter ($.AD_IDENTIFICATION_ID == iden.ID)) map (address, k) -> {
+		"type ": address.TYPE,
+		"number": address.ADDRESS_NUMBER,
+		"street": address.STREET,
+		"Unit": address.UNIT,
+		"City": address.CITY,
+		"State": address.STATE,
+		"zipcode": address.ZIPCODE
+	},
+	"Communication": (vars.communicationResult filter ($.COMM_IDENTIFICATION_ID == iden.ID)) map (comm, j) -> {
+		"type ": comm.TYPE,
+		"number": comm.VALUE,
+		"preferred": comm.PREFERRED
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:execute-script doc:name="Delete database tables to refresh them" doc:id="485e4c2d-0c78-429a-a1dc-f4d0ad457b6b" config-ref="derbyIdentificationConfig" target="tablesDropped">
+			<db:sql>DROP TABLE ADDRESS;
+DROP TABLE COMMUNICATION;
+DROP TABLE IDENTIFICATION
+</db:sql>
+		</db:execute-script>
+    </flow>
+	
+	
+	</mule>

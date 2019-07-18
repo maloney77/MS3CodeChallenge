@@ -1,0 +1,10 @@
+{
+  "sampleData": {
+    "85c1bf48-8bc4-4cff-b221-60279b13f40a": {
+      "payload": "sample_data/list_object_1.dwl"
+    },
+    "cc9dcb66-892e-4324-a85d-ef80e0ad6d6d": {
+      "payload": "sample_data/json.json"
+    }
+  }
+}

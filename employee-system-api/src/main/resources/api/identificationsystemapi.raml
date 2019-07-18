@@ -1,0 +1,160 @@
+#%RAML 1.0
+types:
+  employee:
+    description: This employee object references the entire canonical employee model including their identification, address, and communication information.
+    example:
+      strict: true
+      value:
+        Identification:
+          DOB: 06/21/1980
+          FirstName: Bob
+          LastName: Frederick
+          Gender: M
+          Title: Manager
+        Address:
+          -
+            City: Somewhere
+            Unit: 1 a
+            zipcode: "12345"
+            number: 1234
+            street: blah blah St
+            "type ": home
+            State: WV
+        Communication:
+          -
+            type: email
+            value: bfe@sample.com
+            preferred: "true"
+          -
+            type: cell
+            value: 304-555-8282
+    type: object
+baseUri: https://anypoint.mulesoft.com/mocking/api/v1/links/f07730da-e2af-47b6-9aaa-7d9c600e18a0/
+description: This API performs basic CRUD (create, read, update, delete) operations on the identification, address, and communication tables of the Employee database.
+mediaType:
+  - application/json
+version: v1
+protocols:
+  - HTTP
+/employee:
+  get:
+    responses:
+      "200":
+        body:
+          application/json:
+            type: employee
+    securedBy: []
+    displayName: Get employee
+    description: This get operation will return employee data based on the unique ID given or by the given query parameters. If no query parameter or uri parameter is given it will return all employees.
+    queryParameters:
+      lastName?:
+        example: Mule
+        type: string
+      state?:
+        example: Missouri
+        type: string
+      city?:
+        example: St. Louis
+        type: string
+      firstName?:
+        example: Max
+        type: string
+  post:
+    description: This post will create a new employee inserting all available data into the identification, address, and communication tables
+    body:
+      application/json:
+        type: employee
+    responses:
+      "200":
+        body:
+          application/json:
+            example:
+              strict: true
+              value:
+                Identification:
+                  LastName: Frederick
+                  Gender: M
+                  Title: Manager
+                  DOB: 06/21/1980
+                  FirstName: Bob
+                  Id: 1
+                Address:
+                  -
+                    Unit: 1 a
+                    State: WV
+                    City: Somewhere
+                    street: blah blah St
+                    "type ": home
+                    number: 1234
+                    zipcode: "12345"
+                Communication:
+                  -
+                    type: email
+                    value: bfe@sample.com
+                    preferred: "true"
+                  -
+                    type: cell
+                    value: 304-555-8282
+                status: created
+            type: object
+    securedBy: []
+    displayName: Create employee
+  patch:
+    description: This patch operation is used to update a selected employee. It will take in the uri parameter employeeId and update the appropriate fields that are given in the body
+    body:
+      application/json:
+        type: employee
+        example:
+          strict: true
+          value:
+            address: 123 street
+            city: New York
+    responses:
+      "200":
+        body:
+          application/json:
+            example:
+              strict: true
+              value:
+                Identification:
+                  Title: Manager
+                  Gender: M
+                  FirstName: Bob
+                  DOB: 06/21/1980
+                  LastName: Frederick
+                Address:
+                  -
+                    "type ": home
+                    number: 1234
+                    Unit: 1 a
+                    State: WV
+                    City: New York
+                    zipcode: "12345"
+                    street: 123 street
+                Communication:
+                  -
+                    type: email
+                    value: bfe@sample.com
+                    preferred: "true"
+                  -
+                    type: cell
+                    value: 304-555-8282
+                updates:
+                  address: 123 street
+                  city: New York
+            type: object
+    securedBy: []
+    displayName: Update employee
+  delete:
+    description: This delete operation is used to delete and entire employee by its employeeId. This request must have its uri parameter.
+    responses:
+      "204":
+        body:
+          application/json:
+            example:
+              strict: true
+              value: {}
+            type: object
+    displayName: Delete employee
+securedBy: []
+title: employeeSystemApi

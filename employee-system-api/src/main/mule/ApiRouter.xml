@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+    
+    <flow name="employeeSystemApi">
+        <http:listener config-ref="HTTP_Listener_config" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="employeesystemapi-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="b5e7c672-5554-47bb-a9e8-acb14c78f68b">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[501]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="identificationsystemapi-console">
+        <http:listener config-ref="HTTP_Console_config" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="employeesystemapi-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <sub-flow name="createEmployeeDatabase" doc:id="e87021a3-c473-4bee-9875-f43a16e9d434" >
+		<db:execute-script doc:name="Execute script" doc:id="291eea84-aab9-44d7-a9ac-1481ec306929" config-ref="createDbConfig">
+			<db:sql >CREATE TABLE IDENTIFICATION (
+	ID INT NOT NULL GENERATED ALWAYS AS IDENTITY CONSTRAINT IDENTIFICATION_PK PRIMARY KEY,
+	FIRST_NAME VARCHAR(255) NOT NULL,
+	LAST_NAME VARCHAR(255),
+	BIRTHDATE DATE,
+	GENDER VARCHAR(1),
+	TITLE VARCHAR(255)
+);
+
+CREATE TABLE ADDRESS(
+	TYPE VARCHAR(255),
+	ADDRESS_NUMBER INT,
+	STREET VARCHAR(255) NOT NULL,
+	UNIT VARCHAR(255),
+	CITY VARCHAR(255) NOT NULL,
+	STATE VARCHAR(2) NOT NULL,
+	ZIPCODE VARCHAR(5),
+	AD_IDENTIFICATION_ID INT,
+	FOREIGN KEY (AD_IDENTIFICATION_ID) REFERENCES IDENTIFICATION (ID)
+);
+
+CREATE TABLE COMMUNICATION (
+	TYPE VARCHAR(255),
+	VALUE VARCHAR(255) NOT NULL,
+	PREFERRED BOOLEAN,
+	COMM_IDENTIFICATION_ID INT,
+	FOREIGN KEY (COMM_IDENTIFICATION_ID) REFERENCES IDENTIFICATION (ID)
+)</db:sql>
+		</db:execute-script>
+		<ee:transform doc:name="Transform Message" doc:id="2d6cd400-504b-49cd-8563-b18921e69f2a" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="identificationInsert" ><![CDATA[%dw 2.0
+output application/java
+---
+"identification": [
+	{
+		"FirstName": "Bob",
+		"LastName": "Frederick",
+		"DOB": "06/21/1980",
+		"Gender": "M",
+		"Title": "Manager"
+	},
+	{
+		"FirstName": "Kyle",
+		"LastName": "Maloney",
+		"DOB": "12/30/1969",
+		"Gender": null,
+		"Title": "CEO"
+	},
+	{
+		"FirstName": "Patricia",
+		"LastName": "Parker",
+		"DOB": "11/19/2000",
+		"Gender": "F",
+		"Title": "Photographer"
+	}
+] ]]></ee:set-variable>
+				<ee:set-variable variableName="communicationInsert" ><![CDATA[%dw 2.0
+output application/java
+---
+"communication": [
+	{
+		"type": "email",
+		"value": "bfe@sample.com",
+  		"preferred" : "true",
+  		"identificationId": 1
+	},
+	{
+		"type": "cell",
+		"value": "304-555-8282",
+		"preferred" : "false",
+		"identificationId": 1
+	},
+	{
+		"type": "email",
+		"value": "kyle.maloney200@gmail.com",
+		"preferred" : "true",
+		"identificationId": 2
+	},
+	{
+		"type": "cell",
+		"value": "420-169-1738",
+		"preferred" : "true",
+		"identificationId": 3
+	}
+
+]]]></ee:set-variable>
+				<ee:set-variable variableName="addressInsert" ><![CDATA[%dw 2.0
+output application/java
+---
+"address": [
+	{	
+		"type": "home",	
+		"number": 1234,
+		"street": "blah blah St",	
+		"Unit": null,
+		"City": "Somewhere",
+		"State": "WV",
+		"zipcode": "12345",
+		"identificationId": 1
+	},
+	{	
+		"type": "apartment",	
+		"number": 456,
+		"street": "1738 hey ave",	
+		"Unit": "B",
+		"City": "St. Louis",
+		"State": "MO",
+		"zipcode": "42000",
+		"identificationId": 2
+	},
+	{	
+		"type": "home",	
+		"number": 12,
+		"street": "blah",	
+		"Unit": null,
+		"City": "O'Fallon",
+		"State": "IL",
+		"zipcode": "65897",
+		"identificationId": 3
+	}
+]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:bulk-insert doc:name="Insert Identification Records" doc:id="00292530-623e-44e0-aaf6-76a603abea88" config-ref="derbyIdentificationConfig">
+			<db:bulk-input-parameters ><![CDATA[#[vars.identificationInsert.identification]]]></db:bulk-input-parameters>
+			<db:sql >INSERT INTO IDENTIFICATION (
+	FIRST_NAME,
+	LAST_NAME,
+	BIRTHDATE,
+	GENDER,
+	TITLE
+)
+VALUES(
+	:FirstName,
+	:LastName,
+	:DOB,
+	:Gender,
+	:Title
+)</db:sql>
+		</db:bulk-insert>
+		<db:bulk-insert doc:name="Insert Address Records" doc:id="833e22f2-cf79-4675-93de-3b3619ed2c8b" config-ref="derbyIdentificationConfig">
+			<db:bulk-input-parameters ><![CDATA[#[vars.addressInsert.address]]]></db:bulk-input-parameters>
+			<db:sql >INSERT INTO ADDRESS (
+	TYPE,
+	ADDRESS_NUMBER,
+	STREET,
+	UNIT,
+	CITY,
+	STATE,
+	ZIPCODE,
+	AD_IDENTIFICATION_ID
+)
+VALUES(
+	:type,
+	:number,
+	:street,
+	:Unit,
+	:City,
+	:State,
+	:zipcode,
+	:identificationId
+)</db:sql>
+		</db:bulk-insert>
+		<db:bulk-insert doc:name="Insert Communication Records" doc:id="8b14c049-7765-4253-acdd-c5b46ddbca35" config-ref="derbyIdentificationConfig">
+			<db:bulk-input-parameters ><![CDATA[#[vars.communicationInsert.communication]]]></db:bulk-input-parameters>
+			<db:sql >INSERT INTO COMMUNICATION (
+	TYPE,
+	VALUE,
+	PREFERRED,
+	COMM_IDENTIFICATION_ID
+)
+VALUES(
+	:type,
+	:value,
+	:preferred,
+	:identificationId
+)</db:sql>
+		</db:bulk-insert>
+	</sub-flow>
+</mule>
